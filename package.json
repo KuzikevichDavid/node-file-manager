@@ -1,0 +1,21 @@
+{
+  "name": "node-file-manager",
+  "version": "1.0.0",
+  "description": "node-file-manager",
+  "type": "module",
+  "main": "src/start.js",
+  "scripts": {
+    "start": "node src/start.js -- --username user"
+  },
+  "author": {
+    "name": "Davyd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KuzikevichDavid/node-file-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KuzikevichDavid/node-file-manager/issues"
+  },
+  "homepage": "https://github.com/KuzikevichDavid/node-file-manager#readme"
+}
