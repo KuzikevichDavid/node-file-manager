@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/start.js",
   "scripts": {
-    "start": "node src/start.js -- --username user"
+    "start": "node src/start.js -- --username=user"
   },
   "author": {
     "name": "Davyd"
