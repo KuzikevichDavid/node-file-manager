@@ -1,24 +1,28 @@
 import path from 'node:path'
+import { chdir, cwd } from 'node:process';
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
-const getUpperDir = (currentDir) => {
+const goUpperDir = () => {
 	try {
-		return path.join(currentDir, '..');
+		const res = path.join(cwd(), '..');
+		chdir(res);
 	} catch (err) {
 		throw errOperationFailed;
     }
 }
 
-const getDir = (currentDir, targetDir) => {
+const goDir = (targetDir) => {
 	try {
-		if (path.isAbsolute(targetDir)) {
-			return targetDir;
+		let res = '';
+		/* if (path.isAbsolute(targetDir)) {
+			res = targetDir;
 		} else {
-			return path.join(currentDir, targetDir);
-		}
+			res = path.join(currentDir, targetDir);
+		} */
+		chdir(targetDir);
 	} catch (err) {
 		throw errOperationFailed;
     }
 }
 
-export { getUpperDir, getDir }
+export { goUpperDir, goDir }

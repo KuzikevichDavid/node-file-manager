@@ -36,10 +36,10 @@ const dirEntCompare = (a, b) => {
     return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
 }
 
-const listDir = async (currenDir) => {
+const listDir = async () => {
     const res = [];
     try {
-        const dir = await opendir(currenDir);
+        const dir = await opendir('./');
         let flag = true;
         for await (const dirent of dir) {
             res.push({ name: dirent.name, type: getEntType(dirent) });

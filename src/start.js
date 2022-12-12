@@ -1,19 +1,20 @@
 import { parseCmd, parseUsername } from './cli.js'
-import { getDir, getUpperDir } from './pathNavigation.js'
+import { goDir, goUpperDir } from './pathNavigation.js'
 import { listDir } from './fs.js'
+import { copy, create, read, remove, rename } from './filesBasic.js'
 import { createInterface } from 'node:readline'
+import { chdir, cwd } from 'node:process';
 import os from 'node:os'
 import path from 'node:path'
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
-const username = parseUsername();
-let workDir = path.resolve(path.dirname(os.homedir()), username);
-
 const printWorkDir = () => {
-    console.log(`You are currently in ${workDir}`);
+    console.log(`You are currently in ${cwd()}`);
 }
 
 const main = () => {
+    const username = parseUsername();
+    goDir(path.resolve(path.dirname(os.homedir()), username));
     if (username) {
         console.log(`Welcome to the File Manager, ${username}!`);
         printWorkDir();
@@ -39,14 +40,32 @@ const main = () => {
                     break;
                 case 'up':
                 case '..':
-                    workDir = getUpperDir(workDir);
+                    goUpperDir();
                     break;
                 case 'cd':
-                    workDir = getDir(workDir, cmdLine.args[0]);
+                    goDir(cmdLine.args[0]);
                     break;
                 case 'ls':
-                    const list = await listDir(workDir);
-                    console.table(list);
+                    console.table(await listDir());
+                    break;
+                case 'cat':
+                    await read(cmdLine.args[0], process.stdout);
+                    break;
+                case 'add':
+                    await create(cmdLine.args[0]);
+                    break;
+                case 'rn':
+                    await rename(cmdLine.args[0], cmdLine.args[1]);
+                    break;
+                case 'cp':
+                    await copy(cmdLine.args[0], cmdLine.args[1]);
+                    break;
+                case 'mv':
+                    await copy(cmdLine.args[0], cmdLine.args[1]);
+                    await remove(cmdLine.args[0]);
+                    break;
+                case 'rm':
+                    await remove(cmdLine.args[0]);
                     break;
                 default:
                     console.log('Invalid input');
@@ -56,6 +75,7 @@ const main = () => {
             if (err === errInvalidInput || err === errOperationFailed) {
                 console.log(err.message);
             }
+            console.log(err.message);
         } finally {
             printWorkDir();
         }
