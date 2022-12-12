@@ -1,5 +1,4 @@
-import fs from 'node:fs'
-import { opendir } from 'node:fs/promises';
+import { opendir } from 'node:fs/promises'
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
 const EntType = {
@@ -40,7 +39,6 @@ const listDir = async () => {
     const res = [];
     try {
         const dir = await opendir('./');
-        let flag = true;
         for await (const dirent of dir) {
             res.push({ name: dirent.name, type: getEntType(dirent) });
         }

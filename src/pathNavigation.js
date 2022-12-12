@@ -13,13 +13,11 @@ const goUpperDir = () => {
 
 const goDir = (targetDir) => {
 	try {
-		let res = '';
-		/* if (path.isAbsolute(targetDir)) {
-			res = targetDir;
+		if (targetDir.endsWith('\\')) {
+			chdir(targetDir);
 		} else {
-			res = path.join(currentDir, targetDir);
-		} */
-		chdir(targetDir);
+			chdir(targetDir + '\\');
+        }
 	} catch (err) {
 		throw errOperationFailed;
     }
