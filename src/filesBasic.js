@@ -1,52 +1,44 @@
-import { open, close, createWriteStream, createReadStream, rm, rename as rn } from 'node:fs'
-import { Buffer } from 'node:buffer';
+import { createWriteStream, createReadStream } from 'node:fs'
+import { open, rm, rename as rn } from 'node:fs/promises'
+import { pipeline } from 'node:stream/promises';
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
 const create = async (path) => {
-    open(path, 'wx', (err, fd) => {
-        try{
-            if (err) {
-                throw errOperationFailed;
-            }
-		} finally {
-			close(fd, (err) => {
-				if (err) throw err;
-			});
-		}
-	});
+    try { 
+        const file = await open(path, 'wx');
+        await file.close();
+    } catch {
+        throw errOperationFailed;
+    } 
 }
 
 const read = async (path, outStream) => {
     try {
-        const fileStream = createReadStream(path);
-        await fileStream.pipe(outStream, { end: false });
+        return await pipeline(createReadStream(path), outStream);
     } catch (err) {
-        console.log(err.message);
         throw errOperationFailed;
     }
 };
 
 const remove = async (path) => {
-    rm (path, (err) => {
-		if (err) {
-            throw errOperationFailed;
-		}
-	});
+    try {
+        return await rm(path);
+    } catch (err) {
+        throw errOperationFailed;
+    }
 };
 
 const rename = async (oldName, newName) => {
-    rn(oldName, newName, (err) => {
-        if (err) {
-            throw errOperationFailed;
-        }
-    });
+    try {
+        return await rn(oldName, newName);
+    } catch (err) {
+        throw errOperationFailed;
+    }
 };
 
 const copy = async (src, dest) => {
     try {
-        const readStream = createReadStream(src);
-	    const writeStream = createWriteStream(dest, { flags: 'a' });
-        await readStream.pipe(writeStream);
+        return await pipeline(createReadStream(src), createWriteStream(dest, { flags: 'ax' }));
     } catch (err) {
         throw errOperationFailed;
     } 

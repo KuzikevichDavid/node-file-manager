@@ -3,18 +3,33 @@ import { goDir, goUpperDir } from './pathNavigation.js'
 import { listDir } from './fs.js'
 import { copy, create, read, remove, rename } from './filesBasic.js'
 import { createInterface } from 'node:readline'
-import { chdir, cwd } from 'node:process';
+import { chdir, cwd } from 'node:process'
+import { Writable } from 'node:stream'
 import os from 'node:os'
 import path from 'node:path'
 import { errInvalidInput, errOperationFailed } from './constants.js'
+
+const stdoutForPipeline = () => new Writable ({
+    write(chunk, enc, next) {
+        process.stdout.write(chunk);
+        next();
+    }
+}).on('close', () => process.stdout.write(os.EOL));
 
 const printWorkDir = () => {
     console.log(`You are currently in ${cwd()}`);
 }
 
+const printError = (err) => {
+    if (err === errInvalidInput || err === errOperationFailed) {
+        console.log(err.message);
+    }
+}
+
 const main = () => {
     const username = parseUsername();
     goDir(path.resolve(path.dirname(os.homedir()), username));
+
     if (username) {
         console.log(`Welcome to the File Manager, ${username}!`);
         printWorkDir();
@@ -43,39 +58,34 @@ const main = () => {
                     goUpperDir();
                     break;
                 case 'cd':
-                    goDir(cmdLine.args[0]);
+                    goDir(...cmdLine.args);
                     break;
                 case 'ls':
                     console.table(await listDir());
                     break;
                 case 'cat':
-                    await read(cmdLine.args[0], process.stdout);
+                    await read(cmdLine.args[0], stdoutForPipeline()).catch(printError);
                     break;
                 case 'add':
-                    await create(cmdLine.args[0]);
+                    await create(cmdLine.args[0]).catch(printError);
                     break;
                 case 'rn':
-                    await rename(cmdLine.args[0], cmdLine.args[1]);
+                    await rename(...cmdLine.args).catch(printError);
                     break;
                 case 'cp':
-                    await copy(cmdLine.args[0], cmdLine.args[1]);
+                    await copy(...cmdLine.args).catch(printError);
                     break;
                 case 'mv':
-                    await copy(cmdLine.args[0], cmdLine.args[1]);
-                    await remove(cmdLine.args[0]);
+                    await copy(...cmdLine.args).catch(printError);
+                    await remove(cmdLine.args[0]).catch(printError);
                     break;
                 case 'rm':
-                    await remove(cmdLine.args[0]);
+                    await remove(cmdLine.args[0]).catch(printError);
                     break;
                 default:
                     console.log('Invalid input');
                     break;
             }
-        } catch (err) {
-            if (err === errInvalidInput || err === errOperationFailed) {
-                console.log(err.message);
-            }
-            console.log(err.message);
         } finally {
             printWorkDir();
         }
