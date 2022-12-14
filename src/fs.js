@@ -1,17 +1,6 @@
 import { opendir } from 'node:fs/promises'
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
-const EntType = {
-    file: 1,
-    directory: 2,
-    blockDevice: 3,
-    characterDevice: 4,
-    FIFO: 5,
-    socket: 6,
-    symbolicLink: 7,
-    undefined: 0
-}
-
 const entTypeName = {
     file: 'file',
     directory: 'directory',

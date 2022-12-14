@@ -48,13 +48,12 @@ const main = () => {
 
     rl.on('line', async (data) => {
         try {
-            const cmdLine = parseCmd(data);
+            const cmdLine = await parseCmd(data).catch(printError);
             switch (cmdLine.command) {
                 case '.exit':
                     rl.close();
                     break;
                 case 'up':
-                case '..':
                     goUpperDir();
                     break;
                 case 'cd':
@@ -86,6 +85,8 @@ const main = () => {
                     console.log('Invalid input');
                     break;
             }
+        } catch (err) {
+            printError(err);
         } finally {
             printWorkDir();
         }

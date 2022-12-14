@@ -1,3 +1,61 @@
+import { errInvalidInput, errOperationFailed } from './constants.js'
+
+const splitCmd = (cmdLine) => {
+    const checkData = (data) => {
+        if (data === '""') throw errInvalidInput;
+        return data;
+    }
+
+    cmdLine.trimStart();
+    if (cmdLine.length === 0) throw errInvalidInput;
+
+    let flagData = false;
+    let data = '';
+    let flagQuotes = false;
+    let res = [];
+    try {
+        for (let i = 0; i < cmdLine.length; i++) {
+            if (!flagData) { // если не data
+                if (!cmdLine[i].match(/\s/)) { // если не пробел, то начало data
+                    flagData = true;
+                    data += cmdLine[i];
+                    if (cmdLine[i] === '"') { // если ", то это начало "
+                        flagQuotes = true; 
+                    } 
+                }
+            } else {
+                if (cmdLine[i] === '"') {
+                    if (flagQuotes) { // если ", то это конец "
+                        flagQuotes = false;
+                        flagData = false;
+                        res.push(checkData(data + cmdLine[i])); // TODO check when push data = '""'
+                        data = '';
+                    } else {// " в середине аргумента 
+                        throw errInvalidInput;
+                    }
+                } else if (cmdLine[i].match(/\s/)) { 
+                    if (flagQuotes) { // если ", то пробел внутри "
+                        data += cmdLine[i];
+                    } else { // если нет ", то пробел сигнализирует конец data
+                        flagData = false;
+                        res.push(data); 
+                        data = '';
+                    }
+                } else {
+                    data += cmdLine[i];
+                }
+            }
+        }
+
+        if (data.length !== 0) res.push(data); // если " были не закрыты, считываем ввод до конца
+
+        return res;
+    } catch (err) {
+        if (err === errInvalidInput) throw err;
+        else throw errOperationFailed;
+    }
+}
+
 const parseUsername = () => {
     const argsParts = process.argv.reduce((acc, value, index, array) => {
         if (value.startsWith('--')) {
@@ -10,9 +68,17 @@ const parseUsername = () => {
     return argsParts[1];
 }
 
-const parseCmd = (cliString) => {
-    const parsed = cliString.split(' ');
-    return { command: parsed[0], args: parsed.slice(1) };
-};
+const parseCmd = async (cliString) => {
+    try {
+        const splited = splitCmd(cliString);
+        for (let i = 0; splited.length > i; i++){
+            splited[i] = splited[i].replace(/["]/g, "");
+            console.log(splited[i]);
+        }
+        return { command: splited[0], args: splited.slice(1) };
+    } catch (err) {
+        throw errInvalidInput;
+    }
+}
 
 export { parseCmd, parseUsername };
