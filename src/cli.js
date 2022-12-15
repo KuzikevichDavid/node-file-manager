@@ -73,7 +73,6 @@ const parseCmd = async (cliString) => {
         const splited = splitCmd(cliString);
         for (let i = 0; splited.length > i; i++){
             splited[i] = splited[i].replace(/["]/g, "");
-            console.log(splited[i]);
         }
         return { command: splited[0], args: splited.slice(1) };
     } catch (err) {

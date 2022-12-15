@@ -1,10 +1,15 @@
-import { opendir } from 'node:fs/promises'
+import { opendir, lstat } from 'node:fs/promises'
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
 const entTypeName = {
     file: 'file',
     directory: 'directory',
-    undefined: 'undefined'
+    undefined: 'undefined',
+    symbolicLink: 'symbolicLink',
+    socket: 'socket',
+    characterDevice: 'characterDevice',
+    FIFO: 'FIFO',
+    blockDevice: 'blockDevice',
 }
 
 const getEntType = (dirent) => {
@@ -12,6 +17,16 @@ const getEntType = (dirent) => {
         return entTypeName.file;
     } else if (dirent.isDirectory()) {
         return entTypeName.directory;
+    } else if (dirent.isSymbolicLink()) {
+        return entTypeName.symbolicLink;
+    } else if (dirent.isSocket()) {
+        return entTypeName.socket;
+    } else if (dirent.isFIFO()) {
+        return entTypeName.FIFO;
+    } else if (dirent.isCharacterDevice()) {
+        return entTypeName.characterDevice;
+    } else if (dirent.isBlockDevice()) {
+        return entTypeName.blockDevice;
     } else {
         return entTypeName.undefined;
     }
@@ -29,7 +44,7 @@ const listDir = async () => {
     try {
         const dir = await opendir('./');
         for await (const dirent of dir) {
-            res.push({ name: dirent.name, type: getEntType(dirent) });
+            res.push({ name: dirent.name, type: await lstat(dirent.name).then(getEntType) });
         }
         res.sort(dirEntCompare);
         return res;

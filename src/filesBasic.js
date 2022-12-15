@@ -14,7 +14,7 @@ const create = async (path) => {
 
 const read = async (path, outStream) => {
     try {
-        return await pipeline(createReadStream(path), outStream);
+        return pipeline(createReadStream(path), outStream);
     } catch (err) {
         throw errOperationFailed;
     }
@@ -22,7 +22,7 @@ const read = async (path, outStream) => {
 
 const remove = async (path) => {
     try {
-        return await rm(path);
+        return rm(path);
     } catch (err) {
         throw errOperationFailed;
     }
@@ -30,7 +30,7 @@ const remove = async (path) => {
 
 const rename = async (oldName, newName) => {
     try {
-        return await rn(oldName, newName);
+        return rn(oldName, newName);
     } catch (err) {
         throw errOperationFailed;
     }
@@ -38,7 +38,7 @@ const rename = async (oldName, newName) => {
 
 const copy = async (src, dest) => {
     try {
-        return await pipeline(createReadStream(src), createWriteStream(dest, { flags: 'ax' }));
+        return pipeline(createReadStream(src), createWriteStream(dest, { flags: 'ax' }));
     } catch (err) {
         throw errOperationFailed;
     } 

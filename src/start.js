@@ -2,12 +2,15 @@ import { parseCmd, parseUsername } from './cli.js'
 import { goDir, goUpperDir } from './pathNavigation.js'
 import { listDir } from './fs.js'
 import { copy, create, read, remove, rename } from './filesBasic.js'
+import { getFlag } from './os.js'
+import { compress, decompress } from './zlib.js'
+import { getHash } from './hash.js'
+import { errInvalidInput, errOperationFailed } from './constants.js'
 import { createInterface } from 'node:readline'
 import { chdir, cwd } from 'node:process'
 import { Writable } from 'node:stream'
 import os from 'node:os'
 import path from 'node:path'
-import { errInvalidInput, errOperationFailed } from './constants.js'
 
 const stdoutForPipeline = () => new Writable ({
     write(chunk, enc, next) {
@@ -49,7 +52,7 @@ const main = () => {
     rl.on('line', async (data) => {
         try {
             const cmdLine = await parseCmd(data).catch(printError);
-            switch (cmdLine.command) {
+            switch (cmdLine.command.toLowerCase()) {
                 case '.exit':
                     rl.close();
                     break;
@@ -81,14 +84,26 @@ const main = () => {
                 case 'rm':
                     await remove(cmdLine.args[0]).catch(printError);
                     break;
+                case 'os':
+                    await getFlag(cmdLine.args).then(console.log).catch(printError);
+                    break;
+                case 'hash':
+                    await getHash(cmdLine.args).then(console.log).catch(printError);
+                    break;
+                case 'compress':
+                    await compress(cmdLine.args).catch(printError);
+                    break;
+                case 'decompress':
+                    await decompress(cmdLine.args).catch(printError);
+                    break;
                 default:
-                    console.log('Invalid input');
+                    console.log(errInvalidInput.message);
                     break;
             }
         } catch (err) {
             printError(err);
         } finally {
-            printWorkDir();
+            if (data !== '.exit') printWorkDir();
         }
     })
 }
