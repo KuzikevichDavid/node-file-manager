@@ -28,7 +28,7 @@ const splitCmd = (cmdLine) => {
                     if (flagQuotes) { // если ", то это конец "
                         flagQuotes = false;
                         flagData = false;
-                        res.push(checkData(data + cmdLine[i])); // TODO check when push data = '""'
+                        res.push(checkData(data + cmdLine[i])); 
                         data = '';
                     } else {// " в середине аргумента 
                         throw errInvalidInput;
@@ -56,16 +56,20 @@ const splitCmd = (cmdLine) => {
     }
 }
 
-const parseUsername = () => {
-    const argsParts = process.argv.reduce((acc, value, index, array) => {
-        if (value.startsWith('--')) {
-            const property = value.split('=')[1];
-            return [...acc, property];
-        }
-        return acc;
-    }, []);
+const parseUsername = async () => {
+    try {
+        const argsParts = process.argv.reduce((acc, value, index, array) => {
+            if (value.startsWith('--')) {
+                const property = value.split('=')[1];
+                return [...acc, property];
+            }
+            return acc;
+        }, []);
 
-    return argsParts[1];
+        return argsParts[1];
+    } catch (err) {
+        throw errInvalidInput;
+    }
 }
 
 const parseCmd = async (cliString) => {
@@ -74,10 +78,20 @@ const parseCmd = async (cliString) => {
         for (let i = 0; splited.length > i; i++){
             splited[i] = splited[i].replace(/["]/g, "");
         }
-        return { command: splited[0], args: splited.slice(1) };
+        return { command: splited[0].toLowerCase(), args: splited.slice(1) };
     } catch (err) {
         throw errInvalidInput;
     }
+}
+
+export const checkAgrs = async (args, count, isPath) => {
+    if (args.length != count) throw errInvalidInput;
+    if (isPath) {
+        args.forEach((arg) => {
+            if (arg.match(/[\?\"\*<>]+/)) throw errInvalidInput;
+        });
+    }
+    return args;
 }
 
 export { parseCmd, parseUsername };

@@ -11,7 +11,7 @@ const goUpperDir = () => {
     }
 }
 
-const goDir = (targetDir) => {
+const goDir = async (targetDir) => {
 	try {
 		if (targetDir.endsWith('\\')) {
 			chdir(targetDir);

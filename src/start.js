@@ -1,4 +1,4 @@
-import { parseCmd, parseUsername } from './cli.js'
+import { parseCmd, parseUsername, checkAgrs } from './cli.js'
 import { goDir, goUpperDir } from './pathNavigation.js'
 import { listDir } from './fs.js'
 import { copy, create, read, remove, rename } from './filesBasic.js'
@@ -7,10 +7,9 @@ import { compress, decompress } from './zlib.js'
 import { getHash } from './hash.js'
 import { errInvalidInput, errOperationFailed } from './constants.js'
 import { createInterface } from 'node:readline'
-import { chdir, cwd } from 'node:process'
+import { cwd } from 'node:process'
 import { Writable } from 'node:stream'
 import os from 'node:os'
-import path from 'node:path'
 
 const stdoutForPipeline = () => new Writable ({
     write(chunk, enc, next) {
@@ -26,86 +25,94 @@ const printWorkDir = () => {
 const printError = (err) => {
     if (err === errInvalidInput || err === errOperationFailed) {
         console.log(err.message);
+    } else {
+        console.log(errOperationFailed.message);
     }
 }
 
-const main = () => {
-    const username = parseUsername();
-    goDir(path.resolve(path.dirname(os.homedir()), username));
+const main = async () => {
+    try {
+        const username = await parseUsername().catch(printError);
 
-    if (username) {
-        console.log(`Welcome to the File Manager, ${username}!`);
-        printWorkDir();
-        process.once('exit', () => {
-            console.log(`${os.EOL}Thank you for using File Manager, ${username}, goodbye!`);
-        });
-    }
-    else {
-        process.abort();
-    }
-
-    const rl = createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-
-    rl.on('line', async (data) => {
-        try {
-            const cmdLine = await parseCmd(data).catch(printError);
-            switch (cmdLine.command.toLowerCase()) {
-                case '.exit':
-                    rl.close();
-                    break;
-                case 'up':
-                    goUpperDir();
-                    break;
-                case 'cd':
-                    goDir(...cmdLine.args);
-                    break;
-                case 'ls':
-                    console.table(await listDir());
-                    break;
-                case 'cat':
-                    await read(cmdLine.args[0], stdoutForPipeline()).catch(printError);
-                    break;
-                case 'add':
-                    await create(cmdLine.args[0]).catch(printError);
-                    break;
-                case 'rn':
-                    await rename(...cmdLine.args).catch(printError);
-                    break;
-                case 'cp':
-                    await copy(...cmdLine.args).catch(printError);
-                    break;
-                case 'mv':
-                    await copy(...cmdLine.args).catch(printError);
-                    await remove(cmdLine.args[0]).catch(printError);
-                    break;
-                case 'rm':
-                    await remove(cmdLine.args[0]).catch(printError);
-                    break;
-                case 'os':
-                    await getFlag(cmdLine.args).then(console.log).catch(printError);
-                    break;
-                case 'hash':
-                    await getHash(cmdLine.args).then(console.log).catch(printError);
-                    break;
-                case 'compress':
-                    await compress(cmdLine.args).catch(printError);
-                    break;
-                case 'decompress':
-                    await decompress(cmdLine.args).catch(printError);
-                    break;
-                default:
-                    console.log(errInvalidInput.message);
-                    break;
-            }
-        } catch (err) {
-            printError(err);
-        } finally {
-            if (data !== '.exit') printWorkDir();
+        if (username) {
+            console.log(`Welcome to the File Manager, ${username}!`);
+            await goDir(os.homedir());
+            printWorkDir();
+            process.once('exit', () => {
+                console.log(`${os.EOL}Thank you for using File Manager, ${username}, goodbye!`);
+            });
         }
-    })
+        else {
+            console.log('Wrong args!');
+            process.abort();
+        }
+
+        const rl = createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        rl.on('line', async (data) => {
+            try {
+                const cmdLine = await parseCmd(data).catch(printError);
+                if (cmdLine) {
+                    switch (cmdLine.command) {
+                        case '.exit':
+                            await checkAgrs(cmdLine.args, 0).then(() => process.exit());
+                            break;
+                        case 'up':
+                            await checkAgrs(cmdLine.args, 0).then(() => goUpperDir()).catch(printError);
+                            break;
+                        case 'cd':
+                            await checkAgrs(cmdLine.args, 1, true).then(() => goDir(...cmdLine.args).catch(printError))
+                            break;
+                        case 'ls':
+                            await checkAgrs(cmdLine.args, 0).then(() => listDir().then(console.table));
+                            break;
+                        case 'cat':
+                            await checkAgrs(cmdLine.args, 1, true).then(() => read(stdoutForPipeline(), ...cmdLine.args).catch(printError));
+                            break;
+                        case 'add':
+                            await checkAgrs(cmdLine.args, 1, true).then(() => create(...cmdLine.args).catch(printError));
+                            break;
+                        case 'rn':
+                            await checkAgrs(cmdLine.args, 2, true).then(() => rename(...cmdLine.args).catch(printError));
+                            break;
+                        case 'cp':
+                            await checkAgrs(cmdLine.args, 2, true).then(() => copy(...cmdLine.args).catch(printError));
+                            break;
+                        case 'mv':
+                            await checkAgrs(cmdLine.args, 2, true).then(() => copy(...cmdLine.args).then(() => remove(...cmdLine.args)).catch(printError));
+                            break;
+                        case 'rm':
+                            await checkAgrs(cmdLine.args, 1, true).then(() => remove(...cmdLine.args).catch(printError));
+                            break;
+                        case 'os':
+                            await checkAgrs(cmdLine.args, 1).then(() => getFlag(cmdLine.args).then(console.log).catch(printError));
+                            break;
+                        case 'hash':
+                            await checkAgrs(cmdLine.args, 1, true).then(() => getHash(...cmdLine.args).then(console.log).catch(printError));
+                            break;
+                        case 'compress':
+                            await checkAgrs(cmdLine.args, 2, true).then(() => compress(...cmdLine.args)).catch(printError);
+                            break;
+                        case 'decompress':
+                            await checkAgrs(cmdLine.args, 2, true).then(() => decompress(...cmdLine.args)).catch(printError);
+                            break;
+                        default:
+                            console.log(errInvalidInput.message);
+                            break;
+                    }
+                }
+            } catch (err) {
+                printError(err);
+            } finally {
+                if (data !== '.exit') printWorkDir();
+            }
+        });
+    } catch (err) {
+        printError(err);
+    }
 }
 
 main();

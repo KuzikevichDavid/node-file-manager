@@ -49,7 +49,6 @@ const listDir = async () => {
         res.sort(dirEntCompare);
         return res;
     } catch (err) {
-        console.error(err);
         throw errOperationFailed;
     }
 }

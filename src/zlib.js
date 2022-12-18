@@ -1,25 +1,26 @@
 import { createReadStream, createWriteStream } from 'node:fs'
-import { pipeline } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { createBrotliCompress, createBrotliDecompress } from 'node:zlib'
+import { errInvalidInput, errOperationFailed } from './constants.js'
 
-export const compress = async (args) => {
+export const compress = async (src, dest) => {
     try {
-        pipeline(
-            createReadStream(args[0]),
+        return pipeline(
+            createReadStream(src),
             createBrotliCompress(),
-            createWriteStream(args[1])
+            createWriteStream(dest)
         );
     } catch (err) {
         throw errOperationFailed;
     } 
 };
 
-export const decompress = async (args) => {
+export const decompress = async (src, dest) => {
     try {
-        pipeline(
-            createReadStream(args[0]),
+        return pipeline(
+            createReadStream(src),
             createBrotliDecompress(),
-            createWriteStream(args[1])
+            createWriteStream(dest)
         );
     } catch (err) {
         throw errOperationFailed;

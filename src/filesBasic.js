@@ -12,7 +12,7 @@ const create = async (path) => {
     } 
 }
 
-const read = async (path, outStream) => {
+const read = async (outStream, path) => {
     try {
         return pipeline(createReadStream(path), outStream);
     } catch (err) {
@@ -38,7 +38,7 @@ const rename = async (oldName, newName) => {
 
 const copy = async (src, dest) => {
     try {
-        return pipeline(createReadStream(src), createWriteStream(dest, { flags: 'ax' }));
+        return pipeline(createReadStream(src), createWriteStream(dest));
     } catch (err) {
         throw errOperationFailed;
     } 
