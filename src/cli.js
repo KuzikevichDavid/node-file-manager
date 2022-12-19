@@ -59,14 +59,14 @@ const splitCmd = (cmdLine) => {
 const parseUsername = async () => {
     try {
         const argsParts = process.argv.reduce((acc, value, index, array) => {
-            if (value.startsWith('--')) {
+            if (value.startsWith('--username')) {
                 const property = value.split('=')[1];
                 return [...acc, property];
             }
             return acc;
         }, []);
 
-        return argsParts[1];
+        return argsParts[0];
     } catch (err) {
         throw errInvalidInput;
     }

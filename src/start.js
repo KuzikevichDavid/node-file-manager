@@ -44,7 +44,7 @@ const main = async () => {
         }
         else {
             console.log('Wrong args!');
-            process.abort();
+            process.exit();
         }
 
         const rl = createInterface({
