@@ -87,7 +87,6 @@ const parseCmd = async (cliString) => {
 export const checkAgrs = async (args, count, isPath) => {
     if (args.length != count) throw errInvalidInput;
     if (isPath && process.platform === 'win32') {
-        console.log(process.platform);
         args.forEach((arg) => {
             if (arg.match(/[\?\"\*<>]+/)) throw errInvalidInput;
         });
