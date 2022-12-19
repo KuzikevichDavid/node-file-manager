@@ -1,4 +1,4 @@
-import { opendir, lstat } from 'node:fs/promises'
+import { opendir, lstat, realpath } from 'node:fs/promises'
 import { errInvalidInput, errOperationFailed } from './constants.js'
 
 const entTypeName = {
@@ -33,18 +33,23 @@ const getEntType = (dirent) => {
 }
 
 const dirEntCompare = (a, b) => {
-    if (a.type !== b.type) {
-        return a.type.localeCompare(b.type, 'en', { sensitivity: 'base' });
+    if (a.type && b.type) {
+        if (a.type !== b.type) {
+            return a.type.localeCompare(b.type, 'en', { sensitivity: 'base' });
+        }
+        return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+    } else {
+        return 1;
     }
-    return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
 }
 
 const listDir = async () => {
     const res = [];
     try {
-        const dir = await opendir('./');
+        const path = await realpath('./');
+        const dir = await opendir(path);
         for await (const dirent of dir) {
-            res.push({ name: dirent.name, type: await lstat(dirent.name).then(getEntType) });
+            res.push({ name: dirent.name, type: await lstat(dirent.name).then(getEntType).catch(() => getEntType(dirent)) });
         }
         res.sort(dirEntCompare);
         return res;
